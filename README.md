@@ -5,7 +5,7 @@ Arpy is an algorithmic music generator written in python that was created for a 
 
 Arpy is called like this:
 
-'''
+'''python
 from src.arp import Arpy
 from src.arp.Arpy import Arpy
 from src.arp.ArpNote import ArpNote
@@ -20,4 +20,3 @@ key.volume = 100
 arp = Arpy(key, Progression.minor)
 bars = arp.genBars(32)
 Arpy.makeMidiFromNotes(bars)
-'''
