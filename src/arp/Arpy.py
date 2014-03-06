@@ -37,7 +37,6 @@ class Arpy():
    def genNextRoot(self):
 
       start = self.key
-
       for curNote in range(0, random.randint(0,7)):
          start += self.progression[curNote]
       return start
@@ -87,6 +86,9 @@ class Arpy():
          if not found:
             scale[scaleIndex].pitch -= 1
 
+   '''
+   Generate a single measure given an arpy object and a number of beats
+   '''
    def genBar(self, bpMeasure):
       volume = 100
       notes = []
@@ -112,6 +114,26 @@ class Arpy():
       octave = 0
       inverse = False
       chordType = Chords.triad
+
+      # New Feature! Sicky Tight. Add the main triad as a chord
+      triad1 = copy.copy(newScale[0])
+      triad2 = copy.copy(newScale[2])
+      triad3 = copy.copy(newScale[4])
+
+      triad1.pitch -= 24
+      triad1.duration = noteDuration * bpMeasure
+      triad1.time = time
+      triad1.volume = volume
+      triad2.pitch -= 24
+      triad2.duration = noteDuration * bpMeasure
+      triad2.time = time
+      triad2.volume = volume
+      triad3.pitch -= 24
+      triad3.duration = noteDuration * bpMeasure
+      triad3.time = time
+      triad3.volume = volume
+
+      notes.extend([triad1,triad2,triad3])
 
       # Arpeggiate up the scale bpMeasure number of times
       for note in range(0, bpMeasure):
@@ -151,6 +173,7 @@ class Arpy():
          self.time = time
 
       return notes
+
 
 
    '''
