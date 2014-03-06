@@ -9,6 +9,6 @@ from src.arp.Arpy import Progression
 key = ArpNote()
 key.pitch = Note.C
 key.volume = 100
-arp = Arpy(key, Progression.minor)
+arp = Arpy(key, Progression.major)
 bars = arp.genBars(32)
 Arpy.makeMidiFromNotes(bars)
