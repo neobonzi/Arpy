@@ -3,20 +3,6 @@ Arpy
 
 Arpy is an algorithmic music generator written in python that was created for a course at Cal Poly San Luis Obispo.
 
-Arpy is called like this:
+Arpy is LIVE and requires middleware capable of receiving messages from rtmidi. It has only been tested with JACK but the midi messages will be sent to any open midi port.
 
-'''python
-from src.arp import Arpy
-from src.arp.Arpy import Arpy
-from src.arp.ArpNote import ArpNote
-from src.arp.ArpNote import Note
-from src.arp.Arpy import Progression
-
-# from src.gui import ArpGui
-
-key = ArpNote()
-key.pitch = Note.C
-key.volume = 100
-arp = Arpy(key, Progression.minor)
-bars = arp.genBars(32)
-Arpy.makeMidiFromNotes(bars)
+Simply run ArpGui using python to bring up the gui. Pick a tonic, number of bars, mode, and pick a delay between notes and click start to begin the magic!
