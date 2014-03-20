@@ -29,5 +29,8 @@ class ArpNote():
    '''
    There are 12 notes in an octave, so module 12 notes are equivalent
    '''
-   def __eq__(self, other):
-      return cmp(self.pitch % 12, other.pitch % 12)
+   def __str__(self):
+      return str(self.pitch) + " : " +  str(self.duration) + " : " + str(self.time)
+
+   def __repr__(self):
+      return self.__str__()

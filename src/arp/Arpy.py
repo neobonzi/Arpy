@@ -1,4 +1,4 @@
-#-----------------------------------------------------------------------------
+#---------------------------- -------------------------------------------------
 # Name:        Arpy.py
 # Purpose:     Generate an arpegiatted midi file
 #
@@ -7,7 +7,7 @@
 # Created:     2014/02/24
 #-----------------------------------------------------------------------------
 
-import struct,  sys,  math, random, logging, copy
+import struct,  sys,  math, random, logging, copy, time, rtmidi
 import ArpChord
 from ArpNote import ArpNote
 from src.midiutil.MidiFile import MIDIFile
@@ -17,9 +17,13 @@ class Step():
    half, whole = range(1,3)
 
 class Progression():
-   major = [Step.whole, Step.whole, Step.half, Step.whole, Step.whole, Step.whole, Step.half]
-   minor = [Step.whole, Step.half, Step.whole, Step.whole, Step.half, Step.whole, Step.whole]
-
+   Ionian = [Step.whole, Step.whole, Step.half, Step.whole, Step.whole, Step.whole, Step.half]
+   Dorian = [Step.whole, Step.half, Step.whole, Step.whole, Step.whole, Step.half, Step.whole]
+   Phrygian = [Step.half, Step.whole, Step.whole, Step.whole, Step.half, Step.whole, Step.whole]
+   Lydian = [Step.whole, Step.whole, Step.whole, Step.half, Step.whole, Step.whole, Step.half]
+   Mixolydian = [Step.whole, Step.whole, Step.half, Step.whole, Step.whole, Step.half, Step.whole]
+   Aeolian = [Step.whole, Step.half, Step.whole, Step.whole, Step.half, Step.whole, Step.whole]
+   Locrian = [Step.half, Step.whole, Step.whole, Step.half, Step.whole, Step.whole, Step.whole]
 class Chords():
    triad = [2, 2, 3]
 
@@ -31,8 +35,45 @@ class Arpy():
    def __init__(self, key, progression):
       self.type = 'Arpy'
       self.progression = progression
+      self.out  = rtmidi.MidiOut()
+      self.speed = .156
+      if self.out.get_ports():
+          self.out.open_port(0)
+      else:
+          self.out.open_virtual_port("My virtual output")
       self.key = key
+      self.activeNotes = []
       self.time = 0
+
+   '''
+   Sends a chunk of midi notes live, baby, live!
+   Todo: Queue and parallelism
+   '''
+   def sendNotes(self, notes):
+      self.liveTime = 0
+
+      while notes or self.activeNotes:
+         print "here are the notes"
+         print notes
+         print " there go the notes"
+         print self.activeNotes
+         for activeNote in self.activeNotes:
+            if activeNote.duration == 0:
+               message = [0x80 + activeNote.track, activeNote.pitch, 0]
+               self.out.send_message(message)
+               self.activeNotes.pop(self.activeNotes.index(activeNote))
+            else:
+               activeNote.duration -= 1
+
+         while notes and (self.liveTime == notes[0].time):
+            newNote = notes.pop(0)
+            self.activeNotes.extend([newNote])
+            message = [0x90 + newNote.track, newNote.pitch, 50]
+            self.out.send_message(message)
+         
+         self.liveTime += 1
+         time.sleep(self.speed)
+         print "loop done"
 
    def genNextRoot(self):
 
@@ -46,12 +87,12 @@ class Arpy():
    '''
    def genBars(self, numBars):
       notes = []
-      bpMeasure = 32
+      bpMeasure = 4
 
       for num in range(0,numBars):
-         bars = self.genBar(bpMeasure)
-         notes.extend(bars)
-      return notes
+         notes.extend(self.genBar(bpMeasure))
+
+      self.sendNotes(notes)
 
    '''
    Generate a scale in the mode of the given Arpy object in the key of rootNote
@@ -96,7 +137,7 @@ class Arpy():
       time = self.time
 
       # Beats per note, default 1
-      noteDuration = .25
+      noteDuration = 1
 
       # Get a random note in the scale
       myPitch = self.key.pitch
@@ -121,28 +162,33 @@ class Arpy():
       triad3 = copy.copy(newScale[4])
 
       triad1.pitch -= 24
-      triad1.duration = noteDuration * bpMeasure
       triad1.time = time
+      triad1.track = 2
       triad1.volume = volume
       triad2.pitch -= 24
-      triad2.duration = noteDuration * bpMeasure
+      triad2.track = 2
       triad2.time = time
       triad2.volume = volume
       triad3.pitch -= 24
-      triad3.duration = noteDuration * bpMeasure
+      triad3.track = 2
       triad3.time = time
       triad3.volume = volume
 
       notes.extend([triad1,triad2,triad3])
 
+      startTime = self.time
+
       # Arpeggiate up the scale bpMeasure number of times
       for note in range(0, bpMeasure):
+
+         noteDuration = random.sample([1, 2, 4], 1)[0]
 
          newNote = copy.copy(newScale[chordIndex])
          newNote.time = time
          newNote.duration = noteDuration
          newNote.volume = volume
-         newNote.pitch += octave * 12
+         newNote.track = 1
+         newNote.pitch += octave * 12  
          notes.extend([newNote])
 
          # Determine whether we should go up or down
@@ -169,8 +215,10 @@ class Arpy():
             chordIndex += 7
 
          # Move up the current time 
-         time += noteDuration
+         time += newNote.duration
          self.time = time
+      
+      triad1.duration = triad2.duration = triad3.duration = (time - startTime)
 
       return notes
 

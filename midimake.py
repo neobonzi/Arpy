@@ -11,4 +11,3 @@ key.pitch = Note.C
 key.volume = 100
 arp = Arpy(key, Progression.major)
 bars = arp.genBars(32)
-Arpy.makeMidiFromNotes(bars)
